@@ -223,7 +223,5 @@ Pomelo.prototype.setMessage = function(msg) {
   self_message = msg;
 };
 
-module.exports = function(){
-  return new Pomelo();
-};
+module.exports = Pomelo;
 
