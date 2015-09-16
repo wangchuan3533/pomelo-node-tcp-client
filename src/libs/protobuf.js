@@ -295,7 +295,7 @@
     }
 
     //Set the length of the buffer 2 times bigger to prevent overflow
-    var length = codec.byteLength(JSON.stringify(msg)) * 2;
+    var length = codec.byteLength(JSON.stringify(msg));
 
     //Init buffer and offset
     var buffer = new ArrayBuffer(length);
