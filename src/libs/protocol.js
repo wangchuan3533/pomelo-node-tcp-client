@@ -33,36 +33,31 @@ Message.TYPE_PUSH = 3;
  * socketio current support string
  */
 Protocol.strencode = function(str) {
-  var byteArray = new Buffer(str.length * 3);
-  var offset = 0;
-  for (var i = 0; i < str.length; i++) {
-    var charCode = str.charCodeAt(i);
-    var codes = null;
-    if (charCode <= 0x7f) {
-      codes = [charCode];
+  if(typeof Buffer !== "undefined" && ByteArray === Buffer) {
+    // encoding defaults to 'utf8'
+    return (new Buffer(str));
+  } else {
+    var byteArray = new ByteArray(str.length * 3);
+    var offset = 0;
+    for(var i = 0; i < str.length; i++){
+      var charCode = str.charCodeAt(i);
+      var codes = null;
+      if(charCode <= 0x7f){
+        codes = [charCode];
+      }else if(charCode <= 0x7ff){
+        codes = [0xc0|(charCode>>6), 0x80|(charCode & 0x3f)];
+      }else{
+        codes = [0xe0|(charCode>>12), 0x80|((charCode & 0xfc0)>>6), 0x80|(charCode & 0x3f)];
+      }
+      for(var j = 0; j < codes.length; j++){
+        byteArray[offset] = codes[j];
+        ++offset;
+      }
     }
-    else if (charCode <= 0x7ff) {
-      codes = [
-        0xc0 | (charCode >> 6),
-        0x80 | (charCode & 0x3f)
-      ];
-    }
-    else{
-      codes = [
-        0xe0 | (charCode >> 12),
-        0x80 | ((charCode & 0xfc0) >> 6),
-        0x80 | (charCode & 0x3f)
-      ];
-    }
-
-    for (var j = 0; j < codes.length; j++) {
-      byteArray[offset] = codes[j];
-      ++offset;
-    }
+    var _buffer = new ByteArray(offset);
+    copyArray(_buffer, 0, byteArray, 0, offset);
+    return _buffer;
   }
-  var _buffer = new Buffer(offset);
-  copyArray(_buffer, 0, byteArray, 0, offset);
-  return _buffer;
 };
 
 /**
@@ -71,29 +66,30 @@ Protocol.strencode = function(str) {
  * return Message Object
  */
 Protocol.strdecode = function(buffer) {
-  var bytes = new Buffer(buffer);
-  var array = [];
-  var offset = 0;
-  var charCode = 0;
-  var end = bytes.length;
-  while(offset < end) {
-    if (bytes[offset] < 128) {
-      charCode = bytes[offset];
-      offset += 1;
+  if(typeof Buffer !== "undefined" && ByteArray === Buffer) {
+    // encoding defaults to 'utf8'
+    return buffer.toString();
+  } else {
+    var bytes = new ByteArray(buffer);
+    var array = [];
+    var offset = 0;
+    var charCode = 0;
+    var end = bytes.length;
+    while(offset < end){
+      if(bytes[offset] < 128){
+        charCode = bytes[offset];
+        offset += 1;
+      }else if(bytes[offset] < 224){
+        charCode = ((bytes[offset] & 0x1f)<<6) + (bytes[offset+1] & 0x3f);
+        offset += 2;
+      }else{
+        charCode = ((bytes[offset] & 0x0f)<<12) + ((bytes[offset+1] & 0x3f)<<6) + (bytes[offset+2] & 0x3f);
+        offset += 3;
+      }
+      array.push(charCode);
     }
-    else if (bytes[offset] < 224) {
-      charCode = ((bytes[offset] & 0x3f) << 6) + (bytes[offset + 1] & 0x3f);
-      offset += 2;
-    }
-    else{
-      charCode = ((bytes[offset] & 0x0f) << 12) +
-                 ((bytes[offset+1] & 0x3f) << 6) +
-                 (bytes[offset+2] & 0x3f);
-      offset += 3;
-    }
-    array.push(charCode);
+    return String.fromCharCode.apply(null, array);
   }
-  return String.fromCharCode.apply(null, array);
 };
 
 /**
@@ -140,13 +136,21 @@ Package.encode = function(type, body) {
  * @return {Object}           {type: package type, buffer: body byte array}
  */
 Package.decode = function(buffer) {
-  var bytes =  new ByteArray(buffer);
-  var type = bytes[0];
-  var index = 1;
-  var length = ((bytes[index++]) << 16 | (bytes[index++]) << 8 | bytes[index++]) >>> 0;
-  var body = length ? new ByteArray(length) : null;
-  copyArray(body, 0, bytes, PKG_HEAD_BYTES, length);
-  return {'type': type, 'body': body};
+  var offset = 0;
+  var bytes = new ByteArray(buffer);
+  var length = 0;
+  var rs = [];
+  while(offset < bytes.length) {
+    var type = bytes[offset++];
+    length = ((bytes[offset++]) << 16 | (bytes[offset++]) << 8 | bytes[offset++]) >>> 0;
+    var body = length ? new ByteArray(length) : null;
+    if(body) {
+      copyArray(body, 0, bytes, offset, length);
+    }
+    offset += length;
+    rs.push({'type': type, 'body': body});
+  }
+  return rs.length === 1 ? rs[0]: rs;
 };
 
 /**
@@ -228,31 +232,31 @@ Message.decode = function(buffer) {
   var flag = bytes[offset++];
   var compressRoute = flag & MSG_COMPRESS_ROUTE_MASK;
   var type = (flag >> 1) & MSG_TYPE_MASK;
+  var compressGzip = (flag >> 4) & MSG_COMPRESS_GZIP_MASK;
 
   // parse id
-  if (msgHasId(type)) {
-    var byte = bytes[offset++];
-    id = byte & 0x7f;
-    while(byte & 0x80) {
-      id <<= 7;
-      byte = bytes[offset++];
-      id |= byte & 0x7f;
-    }
+  if(msgHasId(type)) {
+    var m = 0;
+    var i = 0;
+    do{
+      m = parseInt(bytes[offset]);
+      id += (m & 0x7f) << (7 * i);
+      offset++;
+      i++;
+    }while(m >= 128);
   }
 
   // parse route
-  if (msgHasRoute(type)) {
-    if (compressRoute) {
+  if(msgHasRoute(type)) {
+    if(compressRoute) {
       route = (bytes[offset++]) << 8 | bytes[offset++];
-    }
-    else {
+    } else {
       var routeLen = bytes[offset++];
-      if (routeLen) {
+      if(routeLen) {
         route = new ByteArray(routeLen);
         copyArray(route, 0, bytes, offset, routeLen);
         route = Protocol.strdecode(route);
-      }
-      else {
+      } else {
         route = '';
       }
       offset += routeLen;
@@ -265,13 +269,8 @@ Message.decode = function(buffer) {
 
   copyArray(body, 0, bytes, offset, bodyLen);
 
-  return {
-    'id': id,
-    'type': type,
-    'compressRoute': compressRoute,
-    'route': route,
-    'body': body
-  };
+  return {'id': id, 'type': type, 'compressRoute': compressRoute,
+          'route': route, 'body': body, 'compressGzip': compressGzip};
 };
 
 var copyArray = function(dest, doffset, src, soffset, length) {
@@ -314,17 +313,27 @@ var encodeMsgFlag = function(type, compressRoute, buffer, offset) {
 
   buffer[offset] = (type << 1) | (compressRoute ? 1 : 0);
 
+  if(compressGzip) {
+    buffer[offset] = buffer[offset] | MSG_COMPRESS_GZIP_ENCODE_MASK;
+  }
+
   return offset + MSG_FLAG_BYTES;
 };
 
 var encodeMsgId = function(id, idBytes, buffer, offset) {
-  var index = offset + idBytes - 1;
-  buffer[index--] = id & 0x7f;
-  while(index >= offset) {
-    id >>= 7;
-    buffer[index--] = id & 0x7f | 0x80;
-  }
-  return offset + idBytes;
+  do{
+    var tmp = id % 128;
+    var next = Math.floor(id/128);
+
+    if(next !== 0){
+      tmp = tmp + 128;
+    }
+    buffer[offset++] = tmp;
+
+    id = next;
+  } while(id !== 0);
+
+  return offset;
 };
 
 var encodeMsgRoute = function(compressRoute, route, buffer, offset) {

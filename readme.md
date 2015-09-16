@@ -38,3 +38,44 @@ function handleGameEvents(event){
 }
 ```
 
+    public function encode(id:uint, route:String, msg:Object):ByteArray {
+      var buffer:ByteArray = new ByteArray();
+      var type:int = id ? Message.TYPE_REQUEST : Message.TYPE_NOTIFY;
+      var byte:ByteArray = Protobuf.encode(route, msg) || Protocol.strencode(JSON.stringify(msg));
+      var rot:* = Routedic.getID(route) || route;
+
+      buffer.writeByte((type << 1) | ((rot is String) ? 0 : 1));
+
+      if (id) {
+        do {
+          var tmp:int = id % 128;
+          var next:Number = Math.floor(id / 128);
+
+          if (next != 0) {
+            tmp = tmp + 128;
+          }
+
+          buffer.writeByte(tmp);
+
+          id = next;
+        } while (id != 0);
+      }
+
+      if (rot) {
+        if (rot is String) {
+          buffer.writeByte(rot.length & 0xff);
+          buffer.writeUTFBytes(rot);
+        }
+        else {
+          buffer.writeByte((rot >> 8) & 0xff);
+          buffer.writeByte(rot & 0xff);
+        }
+      }
+
+      if (byte) {
+        buffer.writeBytes(byte);
+      }
+
+      return buffer;
+    }
+
