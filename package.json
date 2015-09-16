@@ -1,6 +1,6 @@
 {
   "name": "pomelo-node-tcp-client",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "pomelo node tcp client",
   "main": "index.js",
   "scripts": {
