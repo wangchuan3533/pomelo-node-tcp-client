@@ -77,7 +77,7 @@ Pomelo.prototype.disconnect = function() {
   }
 };
 
-pt.request = function(route, msg, callback) {
+Pomelo.prototype.request = function(route, msg, callback) {
   var self = this;
 
   if (!route || !route.length) {
