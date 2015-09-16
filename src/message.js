@@ -59,9 +59,10 @@ Message.prototype.encode = function(id, route, msg) {
   }
 
   if (byte) {
-    for (var b = 0; b < byte.length; b++) {
-      bytearray.writeByte(buffer, byte[b]);
-    }
+      bytearray.writeByte(buffer, byte);
+    // for (var b = 0; b < byte.length; b++) {
+    //   bytearray.writeByte(buffer, byte[b]);
+    // }
     return buffer;
   }
 
