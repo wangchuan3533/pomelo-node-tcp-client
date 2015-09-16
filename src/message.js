@@ -31,9 +31,9 @@ Message.prototype.encode = function(id, route, msg) {
 
   var buffer = new Buffer(3 + byte.length + rot.length);
   buffer.fill(0x00);
-  // if (!id) {
-  //   bytearray.writeByte(buffer, 0x00);
-  // }
+  if (!id) {
+    bytearray.writeByte(buffer, 0x00);
+  }
   bytearray.writeByte(buffer, (type << 1) | ((typeof(rot) == "string") ? 0 : 1));
   if (id) {
     do {
@@ -59,10 +59,9 @@ Message.prototype.encode = function(id, route, msg) {
   }
 
   if (byte) {
-      bytearray.writeByte(buffer, byte);
-    // for (var b = 0; b < byte.length; b++) {
-    //   bytearray.writeByte(buffer, byte[b]);
-    // }
+    for (var b = 0; b < byte.length; b++) {
+      bytearray.writeByte(buffer, byte[b]);
+    }
     return buffer;
   }
 
