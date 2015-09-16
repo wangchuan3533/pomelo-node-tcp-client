@@ -31,9 +31,6 @@ Message.prototype.encode = function(id, route, msg) {
 
   var buffer = new Buffer(3 + byte.length + rot.length);
   buffer.fill(0x00);
-  if (!id) {
-    bytearray.writeByte(buffer, 0x00);
-  }
   bytearray.writeByte(buffer, (type << 1) | ((typeof(rot) == "string") ? 0 : 1));
   if (id) {
     do {
