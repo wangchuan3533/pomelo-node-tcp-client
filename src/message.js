@@ -29,7 +29,7 @@ Message.prototype.encode = function(id, route, msg) {
   var byte = Protobuf.encode(route, msg) || Protocol.strencode(msgStr);
   var rot = route;
 
-  var buffer = new Buffer(3 + byte.length + rot.length);
+  var buffer = new Buffer(3 + byte.length * 2 + rot.length);
   buffer.fill(0x00);
   bytearray.writeByte(buffer, (type << 1) | ((typeof(rot) == "string") ? 0 : 1));
   if (id) {
