@@ -28,12 +28,15 @@ Message.prototype.encode = function(id, route, msg) {
   var type = id ? self.TYPE_REQUEST : self.TYPE_NOTIFY;
   var byte = Protobuf.encode(route, msg) || Protocol.strencode(msgStr);
   var rot = route;
+  var x = 0;
 
   var buffer = new Buffer(3 + byte.length + rot.length);
   buffer.fill(0x00);
   if (!id) {
+    console.log(x++);
     bytearray.writeByte(buffer, 0x00);
   }
+  console.log(x++);
   bytearray.writeByte(buffer, (type << 1) | ((typeof(rot) == "string") ? 0 : 1));
   if (id) {
     do {
@@ -43,23 +46,29 @@ Message.prototype.encode = function(id, route, msg) {
         tmp = tmp +128;
       }
       bytearray.writeByte(buffer, tmp);
+      console.log(x++);
       id = next;
     } while (id !== 0);
   }
 
   if (rot) {
     if (typeof(rot) == "string") {
+      console.log(x++);
       bytearray.writeByte(buffer, rot.length & 0xff);
+      console.log(x++);
       bytearray.writeUTFBytes(buffer, rot);
     }
     else {
+      console.log(x++);
       bytearray.writeByte(buffer, (rot >> 8) & 0xff);
+      console.log(x++);
       bytearray.writeByte(buffer, rot & 0xff);
     }
   }
 
   if (byte) {
     for (var b = 0; b < byte.length; b++) {
+      console.log(x++);
       bytearray.writeByte(buffer, byte[b]);
     }
     return buffer;
