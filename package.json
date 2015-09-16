@@ -1,0 +1,28 @@
+{
+  "name": "pomelo-node-tcp-client",
+  "version": "0.1.4",
+  "description": "pomelo node tcp client",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/studiokation/pomelo-node-tcp-client"
+  },
+  "keywords": [
+    "pomelo",
+    "node",
+    "tcp",
+    "client"
+  ],
+  "author": "Iggy Ziggy <iggy.ziggy@gmail.com> (http://iz-games.com)",
+  "dependencies": {
+    "bytearray": "*"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/studiokation/pomelo-node-tcp-client/issues"
+  },
+  "homepage": "https://github.com/studiokation/pomelo-node-tcp-client"
+}
