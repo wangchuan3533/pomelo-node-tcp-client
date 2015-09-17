@@ -29,15 +29,18 @@ Message.prototype.encode = function(id, route, msg) {
   var byte = Protobuf.encode(route, msg) || Protocol.strencode(msgStr);
   var rot = route;
 
-  var buffer = new Buffer(3 + byte.length * 2 + rot.length);
+  var buffer = new Buffer(3 + byte.length + rot.length);
   buffer.fill(0x00);
+  if (!id) {
+    bytearray.writeByte(buffer, 0x00);
+  }
   bytearray.writeByte(buffer, (type << 1) | ((typeof(rot) == "string") ? 0 : 1));
   if (id) {
     do {
-      var tmp = id % 128;
-      var next = Math.floor(id / 128);
+      var tmp = id%128;
+      var next = Math.floor(id/128);
       if (next !== 0) {
-        tmp = tmp + 128;
+        tmp = tmp +128;
       }
       bytearray.writeByte(buffer, tmp);
       id = next;
