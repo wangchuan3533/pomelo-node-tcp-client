@@ -158,6 +158,7 @@ Pomelo.prototype.onData = function(data) {
   var self = this;
 
   do {
+    // TODO: this is not correct
     if (self._pkg) {
       self._pkg.body = new Buffer(self._pkg.length);
       self._pkg.body = data;
